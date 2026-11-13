@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#1e2a25">
+  <meta name="description" content="Tägliche Strichliste: 3× Strength, 3× Mobility">
+  <title>Strichliste</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="title-row">
+      <button id="prev-day" class="day-arrow" aria-label="Vortag">‹</button>
+      <div class="title-wrap">
+        <h1 id="title">Heute</h1>
+        <p id="subtitle" class="subtitle"></p>
+      </div>
+      <button id="next-day" class="day-arrow" aria-label="Nächster Tag">›</button>
+    </div>
+    <div class="top-actions">
+      <button id="sync-btn" class="icon-btn" aria-label="Sync-Status" title="Sync-Status">
+        <svg viewBox="0 0 24 24" class="sync-icon"><path class="cloud" d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 9.6 4.2 4.2 0 0 0 7 18z"/><path class="badge" d="M9.5 13.5l2 2 3.5-4"/></svg>
+      </button>
+      <button id="help-btn" class="icon-btn" aria-label="Hilfe">?</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Heute / Tag bearbeiten -->
+    <section id="view-today" class="view active" aria-label="Tag">
+      <div id="past-banner" class="past-banner" hidden>
+        <span>Du trägst nach</span>
+        <button id="back-today" class="link-btn">zurück zu heute</button>
+      </div>
+      <div id="board" class="board" role="application" aria-label="Zeichenfläche: senkrecht wischen für Strength, waagerecht für Mobility">
+        <div id="board-svg"></div>
+        <svg id="trail" class="trail"></svg>
+      </div>
+      <div class="tallies">
+        <div class="tally" id="tally-s">
+          <span class="glyph">|</span><span class="label">Strength</span><span class="count"></span>
+          <button class="minus" data-type="s" aria-label="Einen Strength-Strich entfernen">−</button>
+        </div>
+        <div class="tally" id="tally-m">
+          <span class="glyph">—</span><span class="label">Mobility</span><span class="count"></span>
+          <button class="minus" data-type="m" aria-label="Einen Mobility-Strich entfernen">−</button>
+        </div>
+      </div>
+      <div id="streak" class="streak" role="img" hidden></div>
+    </section>
+
+    <!-- Kalender -->
+    <section id="view-calendar" class="view" aria-label="Kalender">
+      <div class="month-nav">
+        <button id="prev-month" class="icon-btn" aria-label="Vorheriger Monat">‹</button>
+        <h2 id="month-title"></h2>
+        <button id="next-month" class="icon-btn" aria-label="Nächster Monat">›</button>
+      </div>
+      <div class="weekdays"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+      <div id="cal-grid" class="cal-grid"></div>
+      <p class="hint">Tippe auf einen Tag, um nachzutragen.</p>
+    </section>
+
+    <!-- Statistik -->
+    <section id="view-stats" class="view" aria-label="Statistik">
+      <div class="cards">
+        <div class="card big"><span class="num" id="st-current">0</span><span class="cap">aktuelle Serie</span></div>
+        <div class="card big"><span class="num" id="st-longest">0</span><span class="cap">längste Serie</span></div>
+      </div>
+      <div class="card wide">
+        <h3>Volle Tage</h3>
+        <div class="row"><span>Diese Woche</span><span id="st-week"></span></div>
+        <div class="row"><span>Dieser Monat</span><span id="st-month"></span></div>
+      </div>
+      <div class="card wide">
+        <h3>Erfüllung diesen Monat</h3>
+        <div class="bar-row"><span>Strength</span><div class="bar"><i id="bar-s"></i></div><span id="pct-s"></span></div>
+        <div class="bar-row"><span>Mobility</span><div class="bar"><i id="bar-m" class="m"></i></div><span id="pct-m"></span></div>
+      </div>
+      <div class="card wide">
+        <h3>Daten</h3>
+        <p id="account-line" class="small"></p>
+        <div class="btn-row">
+          <button id="export-btn" class="chalk-btn">Backup exportieren</button>
+          <button id="import-btn" class="chalk-btn">Backup importieren</button>
+          <input id="import-file" type="file" accept="application/json,.json" hidden>
+        </div>
+        <div class="btn-row">
+          <button id="sync-now" class="chalk-btn ghost" hidden>Jetzt synchronisieren</button>
+          <button id="logout-btn" class="chalk-btn ghost" hidden>Abmelden</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs" aria-label="Navigation">
+    <button data-view="today" class="active">Heute</button>
+    <button data-view="calendar">Kalender</button>
+    <button data-view="stats">Statistik</button>
+  </nav>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- Hilfe -->
+  <div id="help" class="overlay" hidden>
+    <div class="sheet">
+      <h2>So geht's</h2>
+      <div class="help-row"><svg viewBox="0 0 60 60"><path d="M30 8v44" class="hs"/><path d="M24 44l6 8 6-8" class="ha"/></svg><p><b>Senkrecht wischen</b><br>1 Strength-Übung</p></div>
+      <div class="help-row"><svg viewBox="0 0 60 60"><path d="M8 30h44" class="hm"/><path d="M44 24l8 6-8 6" class="ha"/></svg><p><b>Waagerecht wischen</b><br>1 Mobility-Übung</p></div>
+      <div class="help-row"><svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="20" class="ha"/><path d="M20 30h20" class="he"/></svg><p><b>Minus antippen</b><br>einen Strength- bzw. Mobility-Strich entfernen</p></div>
+      <p class="small">Je 3 Striche pro Tag. Volles Gitter = Tag geschafft. Mit ‹ › oben wechselst du zum Vortag oder nächsten Tag. Der Tag wechselt um 3 Uhr nachts.</p>
+      <button id="help-close" class="chalk-btn">Los geht's</button>
+    </div>
+  </div>
+
+  <!-- Login -->
+  <div id="login" class="overlay" hidden>
+    <form id="login-form" class="sheet">
+      <h2>Anmelden</h2>
+      <p class="small">Einmalig: Du bekommst einen Code per E-Mail. Danach bleibst du angemeldet.</p>
+      <label>E-Mail<input id="login-email" type="email" autocomplete="email" required></label>
+      <div id="code-wrap" hidden>
+        <label>Code<input id="login-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10"></label>
+      </div>
+      <p id="login-msg" class="small msg"></p>
+      <button id="login-submit" class="chalk-btn" type="submit">Code senden</button>
+      <button id="login-skip" class="link-btn" type="button">Erstmal ohne Sync</button>
+    </form>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

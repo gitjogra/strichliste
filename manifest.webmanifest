@@ -1,0 +1,17 @@
+{
+  "name": "Strichliste – 3× Strength, 3× Mobility",
+  "short_name": "Strichliste",
+  "description": "Tägliche Strichliste für Strength- und Mobility-Übungen.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1e2a25",
+  "theme_color": "#1e2a25",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

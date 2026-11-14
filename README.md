@@ -23,7 +23,7 @@ js/storage.js           lokaler Speicher, Tageswechsel, Export/Import
 js/strokes.js           handgezeichnete SVG-Striche
 js/gestures.js          Wischerkennung
 js/stats.js             Serien und Quoten
-js/sync.js              Supabase-Login (E-Mail-Code) und Synchronisation
+js/sync.js              Supabase-Login (E-Mail-Link) und Synchronisation
 js/config.js            Supabase-URL und anon key  ← hier eintragen
 supabase/schema.sql     Tabelle + Zugriffsschutz für Supabase
 sw.js, manifest.webmanifest, icons/   PWA (installierbar, offline)
@@ -44,8 +44,7 @@ Tabelle, Row Level Security und `js/config.js` sind bereits eingerichtet (siehe 
 
 Noch von Hand im Supabase-Dashboard:
 
-1. **Einmal anmelden:** App öffnen → E-Mail eingeben → Link aus der Mail im **selben Browser** öffnen
-   (oder Code eingeben, falls die Mail einen enthält). Ohne eigenen SMTP-Server verschickt Supabase
+1. **Einmal anmelden:** App öffnen → E-Mail eingeben → Link aus der Mail im **selben Browser** öffnen. Ohne eigenen SMTP-Server verschickt Supabase
    die Standard-Mail mit Link; die Vorlagen lassen sich dann nicht ändern. Das reicht aber.
 2. **Registrierung sperren:** *Authentication → Sign In / Providers* → „Allow new users to sign up“ ausschalten.
    Danach kann sich niemand außer dir mehr anmelden.

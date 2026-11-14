@@ -292,6 +292,5 @@ main { flex: 1; padding: 8px 16px calc(var(--tabs-h) + env(safe-area-inset-botto
   background: var(--board-2); border: 2px solid var(--chalk-faint); border-radius: 10px; padding: 10px 12px;
 }
 .sheet input:focus { outline: none; border-color: rgba(236,232,220,0.5); }
-#login-code { letter-spacing: 6px; font-size: 1.4rem; text-align: center; }
 .msg { min-height: 1.2em; margin: 0; }
 .sheet .link-btn { align-self: center; font-size: 1.15rem; color: var(--chalk-dim); }

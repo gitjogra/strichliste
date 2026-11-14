@@ -190,12 +190,10 @@ function renderSyncIcon(status) {
 }
 
 // ---------- Login ----------
-let loginEmail = '';
 function showLogin() {
   $('login').hidden = false;
   $('login-email').value = localStorage.getItem('tally.email') ?? '';
-  $('code-wrap').hidden = true;
-  $('login-submit').textContent = 'Code senden';
+  $('login-submit').textContent = 'Link senden';
   $('login-msg').textContent = '';
 }
 async function onLoginSubmit(e) {
@@ -204,23 +202,12 @@ async function onLoginSubmit(e) {
   const btn = $('login-submit');
   btn.disabled = true;
   try {
-    if ($('code-wrap').hidden) {
-      loginEmail = $('login-email').value.trim();
-      localStorage.setItem('tally.email', loginEmail);
-      msg.textContent = 'Sende Code …';
-      await sync.sendCode(loginEmail);
-      $('code-wrap').hidden = false;
-      $('login-code').focus();
-      btn.textContent = 'Anmelden';
-      msg.textContent = 'Code wurde gesendet – schau in dein Postfach.';
-    } else {
-      msg.textContent = 'Prüfe Code …';
-      await sync.verifyCode(loginEmail, $('login-code').value.trim());
-      $('login').hidden = true;
-      localStorage.removeItem(SKIP_LOGIN_KEY);
-      toast('Angemeldet');
-      if (ui.view === 'stats') renderAccount();
-    }
+    const email = $('login-email').value.trim();
+    localStorage.setItem('tally.email', email);
+    msg.textContent = 'Sende Link …';
+    await sync.sendLink(email);
+    btn.textContent = 'Erneut senden';
+    msg.textContent = 'Link ist unterwegs. Öffne die Mail auf diesem Gerät und tippe den Link an (ggf. im Spam nachsehen).';
   } catch (err) {
     msg.textContent = `Hat nicht geklappt: ${err.message ?? err}`;
   } finally {
@@ -303,6 +290,14 @@ function init() {
     }
   });
   sync.onStatus(renderSyncIcon);
+  sync.onUser((u) => {
+    if (u && !$('login').hidden) {
+      $('login').hidden = true;
+      try { localStorage.removeItem(SKIP_LOGIN_KEY); } catch { /* egal */ }
+      toast('Angemeldet');
+    }
+    if (ui.view === 'stats') renderAccount();
+  });
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkRollover(); });
   setInterval(checkRollover, 60_000);

@@ -124,13 +124,10 @@
   <div id="login" class="overlay" hidden>
     <form id="login-form" class="sheet">
       <h2>Anmelden</h2>
-      <p class="small">Einmalig: Du bekommst einen Code per E-Mail. Danach bleibst du angemeldet.</p>
+      <p class="small">Einmalig: Du bekommst einen Anmelde-Link per E-Mail. Danach bleibst du angemeldet.</p>
       <label>E-Mail<input id="login-email" type="email" autocomplete="email" required></label>
-      <div id="code-wrap" hidden>
-        <label>Code<input id="login-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6,10}" maxlength="10"></label>
-      </div>
       <p id="login-msg" class="small msg"></p>
-      <button id="login-submit" class="chalk-btn" type="submit">Code senden</button>
+      <button id="login-submit" class="chalk-btn" type="submit">Link senden</button>
       <button id="login-skip" class="link-btn" type="button">Erstmal ohne Sync</button>
     </form>
   </div>

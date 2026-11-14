@@ -1,4 +1,4 @@
-// Supabase: Login per E-Mail-Code und Abgleich des lokalen Caches.
+// Supabase: Login per E-Mail-Link und Abgleich des lokalen Caches.
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 import { dirtyDays, markClean, applyRemote, subscribe } from './storage.js';
 
@@ -18,6 +18,13 @@ export const getStatus = () => status;
 export const getUser = () => user;
 export function onStatus(fn) { statusListeners.add(fn); fn(status); }
 function setStatus(s) { status = s; statusListeners.forEach((fn) => fn(s)); }
+const userListeners = new Set();
+export function onUser(fn) { userListeners.add(fn); }
+function setUser(u) {
+  const changed = (u?.id ?? null) !== (user?.id ?? null);
+  user = u;
+  if (changed) userListeners.forEach((fn) => fn(u));
+}
 
 /** Initialisiert den Client. Gibt zurück, ob ein Login nötig ist. */
 export async function initSync() {
@@ -35,7 +42,7 @@ export async function initSync() {
   const { data } = await client.auth.getSession();
   user = data.session?.user ?? null;
   client.auth.onAuthStateChange((event, session) => {
-    user = session?.user ?? null;
+    setUser(session?.user ?? null);
     if (event === 'SIGNED_IN') schedule(0);
   });
   // Nach Login per E-Mail-Link: Token-Reste aus der Adresszeile entfernen
@@ -45,30 +52,32 @@ export async function initSync() {
 
   subscribe((info) => { if (info?.local) schedule(800); });
   window.addEventListener('online', () => schedule(0));
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) schedule(0); });
+  document.addEventListener('visibilitychange', async () => {
+    if (document.hidden) return;
+    // Login-Link wurde evtl. in einem anderen Tab/Chrome geöffnet → Sitzung neu einlesen
+    if (!user) {
+      const { data: d } = await client.auth.getSession();
+      setUser(d.session?.user ?? null);
+    }
+    schedule(0);
+  });
 
   if (user) schedule(0);
   else setStatus('pending');
   return { needsLogin: !user };
 }
 
-export async function sendCode(email) {
+export async function sendLink(email) {
   const { error } = await client.auth.signInWithOtp({ email, options: {
     shouldCreateUser: true,
-    // Falls die Mail einen Link statt Code enthält, führt er zurück zur App
+    // Der Link in der Mail führt zurück zur App
     emailRedirectTo: location.origin + location.pathname,
   } });
   if (error) throw error;
 }
-export async function verifyCode(email, token) {
-  const { data, error } = await client.auth.verifyOtp({ email, token, type: 'email' });
-  if (error) throw error;
-  user = data.user;
-  schedule(0);
-}
 export async function signOut() {
   await client?.auth.signOut();
-  user = null;
+  setUser(null);
   setStatus('pending');
 }
 

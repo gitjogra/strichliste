@@ -1,6 +1,6 @@
-// Service Worker: App offline verfügbar machen.
+// Service Worker: App offline verfügbar machen, Updates aber sofort ausliefern.
 // Bei Änderungen an der App die Versionsnummer erhöhen.
-const CACHE = 'strichliste-v11';
+const CACHE = 'strichliste-v13';
 const SHELL = [
   './',
   'index.html',
@@ -17,11 +17,17 @@ const SHELL = [
   'icons/icon.svg',
   'icons/icon-192.png',
 ];
-// Externe Dateien, die zur Laufzeit zwischengespeichert werden (Schrift, Supabase-Bibliothek)
+// Externe Dateien, die sich nie ändern (feste Versionen) → aus dem Cache
 const RUNTIME_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'];
+const NETWORK_TIMEOUT = 3000; // danach Cache nehmen (schlechtes Netz)
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // cache: 'reload' umgeht den Browser-Cache → garantiert alle Dateien aus derselben Version
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' }))))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -37,19 +43,38 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   const sameOrigin = url.origin === self.location.origin;
-  if (!sameOrigin && !RUNTIME_HOSTS.includes(url.hostname)) return; // z. B. Supabase-API nie cachen
 
-  // Stale-while-revalidate: sofort aus dem Cache, im Hintergrund aktualisieren
-  e.respondWith(
-    caches.open(CACHE).then(async (cache) => {
-      const cached = await cache.match(req, { ignoreSearch: sameOrigin });
-      const network = fetch(req)
-        .then((res) => {
-          if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    }),
-  );
+  if (sameOrigin) {
+    // App-Dateien: Netz zuerst (immer aktuell), offline/langsam → Cache
+    e.respondWith(networkFirst(req));
+  } else if (RUNTIME_HOSTS.includes(url.hostname)) {
+    e.respondWith(cacheFirst(req));
+  }
+  // alles andere (z. B. Supabase-API) geht ungecacht durchs Netz
 });
+
+async function networkFirst(req) {
+  const cache = await caches.open(CACHE);
+  try {
+    const res = await Promise.race([
+      fetch(req, { cache: 'no-cache' }), // beim Server nachfragen (meist nur kurzes „304 unverändert“)
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), NETWORK_TIMEOUT)),
+    ]);
+    if (res.ok) cache.put(req, res.clone());
+    return res;
+  } catch {
+    const cached = await cache.match(req, { ignoreSearch: true });
+    if (cached) return cached;
+    if (req.mode === 'navigate') return cache.match('index.html');
+    throw new Error('offline und nicht im Cache');
+  }
+}
+
+async function cacheFirst(req) {
+  const cache = await caches.open(CACHE);
+  const cached = await cache.match(req);
+  if (cached) return cached;
+  const res = await fetch(req);
+  if (res && (res.ok || res.type === 'opaque')) cache.put(req, res.clone());
+  return res;
+}

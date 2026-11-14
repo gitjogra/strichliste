@@ -343,7 +343,20 @@ function init() {
   });
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('sw.js').catch(() => { /* ohne Offline-Modus weiter */ });
+    // Neue Version übernommen → einmal neu laden, damit alle Dateien zusammenpassen
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloading) return;
+      reloading = true;
+      location.reload();
+    });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then((reg) => {
+        // Beim Zurückholen der App aus dem Hintergrund nach Updates schauen
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+      })
+      .catch(() => { /* ohne Offline-Modus weiter */ });
   }
 }
 

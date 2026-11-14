@@ -1,6 +1,6 @@
 // Service Worker: App offline verfügbar machen.
 // Bei Änderungen an der App die Versionsnummer erhöhen.
-const CACHE = 'strichliste-v8';
+const CACHE = 'strichliste-v11';
 const SHELL = [
   './',
   'index.html',
@@ -12,6 +12,7 @@ const SHELL = [
   'js/gestures.js',
   'js/stats.js',
   'js/sync.js',
+  'js/exercises.js',
   'manifest.webmanifest',
   'icons/icon.svg',
   'icons/icon-192.png',

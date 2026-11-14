@@ -1,9 +1,13 @@
 // Supabase: Login per E-Mail-Link und Abgleich des lokalen Caches.
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 import { dirtyDays, markClean, applyRemote, subscribe } from './storage.js';
+import {
+  dirtyExercises, markExercisesClean, applyRemoteExercises, subscribeExercises,
+} from './exercises.js';
 
 const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
 const TABLE = 'tally_days';
+const EX_TABLE = 'custom_exercises';
 
 let client = null;
 let user = null;
@@ -51,6 +55,7 @@ export async function initSync() {
   }
 
   subscribe((info) => { if (info?.local) schedule(800); });
+  subscribeExercises((info) => { if (info?.local) schedule(300); });
   window.addEventListener('online', () => schedule(0));
   document.addEventListener('visibilitychange', async () => {
     if (document.hidden) return;
@@ -83,7 +88,7 @@ export async function signOut() {
 
 export function schedule(delay = 800) {
   if (!client || !user) return;
-  if (dirtyDays().length) setStatus('pending');
+  if (dirtyDays().length || dirtyExercises().length) setStatus('pending');
   clearTimeout(timer);
   timer = setTimeout(syncNow, delay);
 }
@@ -107,7 +112,24 @@ export async function syncNow() {
     const { data, error } = await client.from(TABLE).select('day,log,updated_at');
     if (error) throw error;
     applyRemote(data);
-    setStatus(dirtyDays().length ? 'pending' : 'ok');
+
+    // 3) Eigene Übungen: Push, dann Pull
+    const dirtyEx = dirtyExercises();
+    if (dirtyEx.length) {
+      const rows = dirtyEx.map((e) => ({
+        id: e.id, user_id: user.id, type: e.type, name: e.name, deleted: e.deleted,
+        created_at: e.createdAt, updated_at: e.updatedAt,
+      }));
+      const { error: exErr } = await client.from(EX_TABLE).upsert(rows, { onConflict: 'id' });
+      if (exErr) throw exErr;
+      markExercisesClean(dirtyEx);
+    }
+    const { data: exData, error: exPullErr } = await client.from(EX_TABLE)
+      .select('id,type,name,deleted,created_at,updated_at');
+    if (exPullErr) throw exPullErr;
+    applyRemoteExercises(exData);
+
+    setStatus(dirtyDays().length || dirtyExercises().length ? 'pending' : 'ok');
   } catch (err) {
     console.warn('Sync fehlgeschlagen', err);
     setStatus(navigator.onLine ? 'error' : 'offline');

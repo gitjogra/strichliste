@@ -65,15 +65,6 @@ h1 { font-size: 2.6rem; line-height: 1; }
 .icon-btn:disabled { opacity: 0.25; }
 .icon-btn:active { background: var(--chalk-faint); }
 
-.sync-icon { width: 24px; height: 24px; fill: none; stroke: var(--chalk-dim); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-.sync-icon .badge { stroke: var(--chalk-m); opacity: 0; }
-#sync-btn[data-status="ok"] .badge { opacity: 1; }
-#sync-btn[data-status="pending"] .cloud,
-#sync-btn[data-status="syncing"] .cloud { stroke-dasharray: 3 3; }
-#sync-btn[data-status="syncing"] .cloud { animation: dash 1s linear infinite; }
-#sync-btn[data-status="offline"] .cloud { opacity: 0.35; }
-#sync-btn[data-status="error"] .cloud { stroke: var(--chalk-done); }
-@keyframes dash { to { stroke-dashoffset: -12; } }
 
 /* ---------- Ansichten ---------- */
 main { flex: 1; padding: 8px 16px calc(var(--tabs-h) + env(safe-area-inset-bottom) + 16px); }
@@ -200,7 +191,32 @@ main { flex: 1; padding: 8px 16px calc(var(--tabs-h) + env(safe-area-inset-botto
 .mini-svg { width: 100%; height: 100%; display: block; padding: 20% 12% 4%; }
 .mini-svg path { fill: none; stroke-width: 18; stroke-linecap: round; }
 .mini-svg .st-done { stroke-width: 11; opacity: 0.85; }
-.hint { text-align: center; font-family: var(--hand); font-size: 1.2rem; color: var(--chalk-dim); margin-top: 14px; }
+.hint { text-align: center; font-family: var(--hand); font-size: 1.2rem; color: var(--chalk-dim); margin: 14px 0 18px; }
+
+/* ---------- Übungen ---------- */
+.ex-card:first-child { margin-top: 0; }
+.ex-card h3 { display: flex; align-items: center; gap: 10px; }
+.ex-card .glyph { font-family: var(--hand); font-weight: 700; font-size: 1.6rem; width: 1.2em; text-align: center; }
+.ex-card .glyph.s { color: var(--chalk-s); }
+.ex-card .glyph.m { color: var(--chalk-m); }
+.ex-list { margin: 0; padding-left: 2.1em; font-family: var(--hand); font-size: 1.35rem; line-height: 1.45; }
+.ex-list li::marker { color: var(--chalk-dim); font-size: 1.1rem; }
+.ex-list li.custom span { margin-right: 6px; }
+.ex-del {
+  background: none; border: none; cursor: pointer; color: var(--chalk-dim);
+  font-size: 1.3rem; line-height: 1; padding: 2px 8px; vertical-align: middle; opacity: 0.6;
+}
+.ex-add { margin: 6px 0 2px 1.1em; min-height: 40px; display: flex; align-items: center; }
+.ex-plus {
+  width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+  background: none; border: 2px dashed var(--chalk-dim); color: var(--chalk);
+  font-family: var(--hand); font-size: 1.7rem; line-height: 1;
+}
+.ex-add input {
+  flex: 1; background: transparent; border: none; border-bottom: 2px solid var(--chalk-dim);
+  color: var(--chalk); font-family: var(--hand); font-size: 1.35rem; padding: 4px 2px; outline: none;
+}
+.ex-add input:focus { border-bottom-color: var(--chalk); }
 
 /* ---------- Statistik ---------- */
 .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

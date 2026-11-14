@@ -25,9 +25,6 @@
       <button id="next-day" class="day-arrow" aria-label="Nächster Tag">›</button>
     </div>
     <div class="top-actions">
-      <button id="sync-btn" class="icon-btn" aria-label="Sync-Status" title="Sync-Status">
-        <svg viewBox="0 0 24 24" class="sync-icon"><path class="cloud" d="M7 18h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6.1 9.6 4.2 4.2 0 0 0 7 18z"/><path class="badge" d="M9.5 13.5l2 2 3.5-4"/></svg>
-      </button>
       <button id="help-btn" class="icon-btn" aria-label="Hilfe">?</button>
     </div>
   </header>
@@ -56,8 +53,8 @@
       <div id="streak" class="streak" role="img" hidden></div>
     </section>
 
-    <!-- Kalender -->
-    <section id="view-calendar" class="view" aria-label="Kalender">
+    <!-- Statistik: oben Kalender, darunter Kennzahlen -->
+    <section id="view-stats" class="view" aria-label="Statistik">
       <div class="month-nav">
         <button id="prev-month" class="icon-btn" aria-label="Vorheriger Monat">‹</button>
         <h2 id="month-title"></h2>
@@ -66,10 +63,7 @@
       <div class="weekdays"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
       <div id="cal-grid" class="cal-grid"></div>
       <p class="hint">Tippe auf einen Tag, um nachzutragen.</p>
-    </section>
 
-    <!-- Statistik -->
-    <section id="view-stats" class="view" aria-label="Statistik">
       <div class="cards">
         <div class="card big"><span class="num" id="st-current">0</span><span class="cap">aktuelle Serie</span></div>
         <div class="card big"><span class="num" id="st-longest">0</span><span class="cap">längste Serie</span></div>
@@ -98,12 +92,32 @@
         </div>
       </div>
     </section>
+
+    <!-- Übungen -->
+    <section id="view-exercises" class="view" aria-label="Übungen">
+      <div class="card wide ex-card">
+        <h3><span class="glyph s">|</span> Strength</h3>
+        <ol id="ex-s" class="ex-list"></ol>
+        <form class="ex-add" data-type="s">
+          <button type="button" class="ex-plus" aria-label="Strength-Übung hinzufügen">+</button>
+          <input type="text" maxlength="80" placeholder="Neue Strength-Übung" enterkeyhint="done" hidden>
+        </form>
+      </div>
+      <div class="card wide ex-card">
+        <h3><span class="glyph m">—</span> Mobility</h3>
+        <ol id="ex-m" class="ex-list"></ol>
+        <form class="ex-add" data-type="m">
+          <button type="button" class="ex-plus" aria-label="Mobility-Übung hinzufügen">+</button>
+          <input type="text" maxlength="80" placeholder="Neue Mobility-Übung" enterkeyhint="done" hidden>
+        </form>
+      </div>
+    </section>
   </main>
 
   <nav class="tabs" aria-label="Navigation">
     <button data-view="today" class="active">Heute</button>
-    <button data-view="calendar">Kalender</button>
     <button data-view="stats">Statistik</button>
+    <button data-view="exercises">Übungen</button>
   </nav>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

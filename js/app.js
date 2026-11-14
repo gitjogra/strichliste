@@ -6,6 +6,7 @@ import { boardSVG, miniSVG, flameSVG } from './strokes.js';
 import { attachGestures } from './gestures.js';
 import { currentStreak, longestStreak, streakAt, flameStage, rangeStats, weekStart, monthStart } from './stats.js';
 import * as sync from './sync.js';
+import { listExercises, addExercise, removeExercise, subscribeExercises } from './exercises.js';
 
 const $ = (id) => document.getElementById(id);
 const WEEKDAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
@@ -162,8 +163,40 @@ function show(view) {
   document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   document.querySelectorAll('.day-arrow').forEach((b) => { b.hidden = view !== 'today'; });
   if (view === 'today') renderDay();
-  if (view === 'calendar') { $('title').textContent = 'Kalender'; $('subtitle').textContent = '3 + 3 = ein volles Gitter'; renderCalendar(); }
-  if (view === 'stats') { $('title').textContent = 'Statistik'; $('subtitle').textContent = longDate(ui.today); renderStats(); }
+  if (view === 'stats') { $('title').textContent = 'Statistik'; $('subtitle').textContent = longDate(ui.today); renderCalendar(); renderStats(); }
+  if (view === 'exercises') { $('title').textContent = 'Übungen'; $('subtitle').textContent = 'Such dir je 3 aus'; renderExercises(); }
+}
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function renderExercises() {
+  for (const t of ['s', 'm']) {
+    $(`ex-${t}`).innerHTML = listExercises(t).map((e) => (e.custom
+      ? `<li class="custom"><span>${esc(e.name)}</span><button class="ex-del" data-id="${e.id}" aria-label="${esc(e.name)} löschen">×</button></li>`
+      : `<li>${esc(e.name)}</li>`)).join('');
+  }
+}
+function setupExerciseForms() {
+  document.querySelectorAll('.ex-add').forEach((form) => {
+    const plus = form.querySelector('.ex-plus');
+    const input = form.querySelector('input');
+    const close = () => { input.value = ''; input.hidden = true; plus.hidden = false; };
+    plus.addEventListener('click', () => { plus.hidden = true; input.hidden = false; input.focus(); });
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (addExercise(form.dataset.type, input.value)) { toast('Übung hinzugefügt'); renderExercises(); }
+      close();
+    });
+    input.addEventListener('blur', () => { if (!input.value.trim()) close(); });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  });
+  $('view-exercises').addEventListener('click', (e) => {
+    const btn = e.target.closest('.ex-del');
+    if (!btn) return;
+    const name = btn.parentElement.querySelector('span').textContent;
+    if (!confirm(`„${name}“ löschen?`)) return;
+    removeExercise(btn.dataset.id);
+    renderExercises();
+  });
+  subscribeExercises((info) => { if (info?.remote && ui.view === 'exercises') renderExercises(); });
 }
 function openDay(k) {
   ui.day = k;
@@ -180,12 +213,8 @@ function checkRollover() {
   show(ui.view);
 }
 
-// ---------- Sync-Symbol ----------
-function renderSyncIcon(status) {
-  const btn = $('sync-btn');
-  btn.dataset.status = status;
-  btn.hidden = status === 'off';
-  btn.title = { ok: 'Synchronisiert', pending: 'Wartet auf Sync', syncing: 'Synchronisiere …', offline: 'Offline', error: 'Sync-Fehler' }[status] ?? '';
+// ---------- Sync-Status (steht unter Statistik → Daten) ----------
+function onSyncStatus() {
   if (ui.view === 'stats') renderAccount();
 }
 
@@ -268,7 +297,6 @@ function init() {
   $('import-btn').addEventListener('click', () => $('import-file').click());
   $('import-file').addEventListener('change', (e) => { if (e.target.files[0]) doImport(e.target.files[0]); e.target.value = ''; });
   $('sync-now').addEventListener('click', () => sync.syncNow());
-  $('sync-btn').addEventListener('click', () => show('stats'));
   $('logout-btn').addEventListener('click', async () => {
     if (sync.getUser()) {
       if (!confirm('Abmelden? Deine Striche bleiben auf diesem Gerät und in Supabase.')) return;
@@ -277,6 +305,7 @@ function init() {
     } else showLogin();
   });
   $('login-form').addEventListener('submit', onLoginSubmit);
+  setupExerciseForms();
   $('login-skip').addEventListener('click', () => {
     $('login').hidden = true;
     try { localStorage.setItem(SKIP_LOGIN_KEY, '1'); } catch { /* egal */ }
@@ -285,11 +314,10 @@ function init() {
   subscribe((info) => {
     if (info?.remote || info?.import) {
       if (ui.view === 'today') renderDay();
-      if (ui.view === 'calendar') renderCalendar();
-      if (ui.view === 'stats') renderStats();
+      if (ui.view === 'stats') { renderCalendar(); renderStats(); }
     }
   });
-  sync.onStatus(renderSyncIcon);
+  sync.onStatus(onSyncStatus);
   sync.onUser((u) => {
     if (u && !$('login').hidden) {
       $('login').hidden = true;

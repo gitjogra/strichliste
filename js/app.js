@@ -287,7 +287,6 @@ function init() {
     if (b && !b.disabled) openDay(b.dataset.day);
   });
 
-  $('help-btn').addEventListener('click', () => { $('help').hidden = false; });
   $('help-close').addEventListener('click', () => {
     $('help').hidden = true;
     try { localStorage.setItem(HELP_KEY, '1'); } catch { /* egal */ }

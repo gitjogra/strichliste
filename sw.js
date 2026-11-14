@@ -1,6 +1,6 @@
 // Service Worker: App offline verfügbar machen, Updates aber sofort ausliefern.
 // Bei Änderungen an der App die Versionsnummer erhöhen.
-const CACHE = 'strichliste-v13';
+const CACHE = 'strichliste-v14';
 const SHELL = [
   './',
   'index.html',

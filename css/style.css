@@ -171,6 +171,8 @@ main { flex: 1; padding: 8px 16px calc(var(--tabs-h) + env(safe-area-inset-botto
 .month-nav { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 10px; }
 .month-nav h2 { font-size: 1.9rem; }
 .weekdays, .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+/* Senkrecht scrollen bleibt beim Browser, waagerecht wischen übernimmt die App (Monatswechsel) */
+.cal-grid { touch-action: pan-y; }
 .weekdays span { text-align: center; font-family: var(--hand); font-size: 1.15rem; color: var(--chalk-dim); }
 .cal-day {
   position: relative; aspect-ratio: 1; padding: 0; cursor: pointer;

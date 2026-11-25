@@ -121,9 +121,69 @@ function shiftMonth(delta) {
   const [y, m] = ui.month.split('-').map(Number);
   const d = new Date(y, m - 1 + delta, 1);
   const next = fmt(d).slice(0, 7);
-  if (next > ui.today.slice(0, 7)) return;
+  if (next > ui.today.slice(0, 7)) return false;
   ui.month = next;
   renderCalendar();
+  return true;
+}
+
+/** Monatsraster: nach links wischen = nächster Monat, nach rechts = vorheriger. */
+function attachMonthSwipe(grid) {
+  const MIN = 50;            // Mindestweg in px
+  let start = null;
+  let swiped = false;
+  const reset = () => { grid.style.transition = ''; grid.style.transform = ''; };
+
+  grid.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    start = { x: e.clientX, y: e.clientY, horizontal: false };
+    swiped = false;
+  });
+  grid.addEventListener('pointermove', (e) => {
+    if (!start) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (!start.horizontal && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.5) start.horizontal = true;
+    if (start.horizontal) grid.style.transform = `translateX(${dx * 0.4}px)`; // Raster folgt dem Finger leicht
+  });
+  const end = (e) => {
+    if (!start) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    const wasHorizontal = start.horizontal;
+    start = null;
+    if (!wasHorizontal || Math.abs(dx) < MIN || Math.abs(dx) < Math.abs(dy) * 1.5) {
+      grid.style.transition = 'transform 0.15s ease-out'; grid.style.transform = '';
+      setTimeout(reset, 160);
+      return;
+    }
+    swiped = true; // den Klick am Ende der Geste nicht als „Tag öffnen“ werten
+    const delta = dx < 0 ? 1 : -1;
+    if (!shiftMonth(delta)) {
+      // Zukunft gesperrt → zurückfedern
+      grid.style.transition = 'transform 0.2s ease-out'; grid.style.transform = '';
+      setTimeout(reset, 210);
+      vibrate([10, 30, 10]);
+      return;
+    }
+    vibrate(10);
+    // neuer Monat gleitet von der Seite herein
+    grid.style.transition = 'none';
+    grid.style.transform = `translateX(${delta * 40}px)`;
+    grid.style.opacity = '0.3';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      grid.style.transition = 'transform 0.2s ease-out, opacity 0.2s ease-out';
+      grid.style.transform = '';
+      grid.style.opacity = '';
+      setTimeout(reset, 210);
+    }));
+  };
+  grid.addEventListener('pointerup', end);
+  grid.addEventListener('pointercancel', () => { start = null; reset(); });
+  // Klick direkt nach einem Wisch abfangen (Capture-Phase, vor dem Tag-Klick)
+  grid.addEventListener('click', (e) => {
+    if (swiped) { e.stopImmediatePropagation(); e.preventDefault(); swiped = false; }
+  }, true);
 }
 
 // ---------- Ansicht: Statistik ----------
@@ -282,6 +342,7 @@ function init() {
   $('back-today').addEventListener('click', () => openDay(ui.today));
   $('prev-month').addEventListener('click', () => shiftMonth(-1));
   $('next-month').addEventListener('click', () => shiftMonth(1));
+  attachMonthSwipe($('cal-grid'));
   $('cal-grid').addEventListener('click', (e) => {
     const b = e.target.closest('.cal-day');
     if (b && !b.disabled) openDay(b.dataset.day);
